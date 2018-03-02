@@ -1,27 +1,66 @@
 import { Injectable } from '@angular/core';
-import { HEROES } from '../model/mock-heroes';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+
 import { Hero } from '../model/hero';
 
 import { Observable } from 'rxjs/Observable';
 import { of } from 'rxjs/observable/of';
+import { catchError, map, tap } from 'rxjs/operators';
 
 import { MessageService } from './message.service';
 
 @Injectable()
 export class HeroService {
 
-  constructor(private msgService: MessageService) { }
+  private heroesUrl = 'api/heroes';  // URL to web api
+
+  constructor(private msgService: MessageService,
+              private httpClient: HttpClient) { }
 
   getHeroes(): Observable<Hero[]>{
     // todo send msg after returning the heroes...
-    this.msgService.add("heroService : fetched heroes");
-    return of(HEROES);
+    return this.httpClient.get<Hero[]>(this.heroesUrl)
+          .pipe(
+            tap(heroes=>this.logMsg("heroService : fetched heroes")),
+            catchError(this.handleError('getHeroes', []))
+          );
   }
 
+updateHero (hero: Hero): Observable<any> {
+  const httpOptions = {
+    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  };
+  return this.httpClient.put(this.heroesUrl, hero, httpOptions).pipe(
+    tap(_ => this.logMsg(`updated hero id=${hero.id}`)),
+    catchError(this.handleError<any>('updateHero'))
+  );
+}
+
   getHero(id : number): Observable<Hero>{
-    // todo send msg after returning the heroe...
-    this.msgService.add(`heroService : fetched hero with id ${id}`);
-    return of(HEROES.find(hero => hero.id === id));
+    const url = `${this.heroesUrl}/${id}`;
+    return this.httpClient.get<Hero>(url)
+      .pipe(
+        tap(_ => this.logMsg(`fetched hero id=${id}`)),
+        catchError(this.handleError<Hero>(`getHero id=${id}`))
+      );
+  }
+
+  logMsg(msg: string) : void{
+    this.msgService.add(msg);
+  }
+
+  private handleError<T> (operation = 'operation', result?: T) {
+    return (error: any): Observable<T> => {
+
+      // TODO: send the error to remote logging infrastructure
+      console.error(error); // log to console instead
+
+      // TODO: better job of transforming error for user consumption
+      this.logMsg(`${operation} failed: ${error.message}`);
+
+      // Let the app keep running by returning an empty result.
+      return of(result as T);
+    };
   }
 
 }
