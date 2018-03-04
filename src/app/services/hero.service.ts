@@ -12,6 +12,10 @@ import { MessageService } from './message.service';
 @Injectable()
 export class HeroService {
 
+  private httpOptions = {
+    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  };
+
   private heroesUrl = 'api/heroes';  // URL to web api
 
   constructor(private msgService: MessageService,
@@ -27,10 +31,8 @@ export class HeroService {
   }
 
 updateHero (hero: Hero): Observable<any> {
-  const httpOptions = {
-    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-  };
-  return this.httpClient.put(this.heroesUrl, hero, httpOptions).pipe(
+
+  return this.httpClient.put(this.heroesUrl, hero, this.httpOptions).pipe(
     tap(_ => this.logMsg(`updated hero id=${hero.id}`)),
     catchError(this.handleError<any>('updateHero'))
   );
@@ -45,7 +47,34 @@ updateHero (hero: Hero): Observable<any> {
       );
   }
 
-  logMsg(msg: string) : void{
+  add(newHero : Hero) : Observable<Hero>{
+    return this.httpClient.post(this.heroesUrl, newHero, this.httpOptions).pipe(
+      tap(_ => this.logMsg(`saved new hero id=${newHero.id}`)),
+      catchError(this.handleError<Hero>(`add Hero`))
+    );
+  }
+
+  deleteHero(hero: Hero | number): Observable<Hero> {
+    const id = typeof hero === 'number' ? hero : hero.id;
+    const url = `${this.heroesUrl}/${id}`;
+
+    return this.httpClient.delete(url, this.httpOptions).pipe(
+      tap(_ => this.logMsg(`deleted hero id=${id}`)),
+      catchError(this.handleError<Hero>(`deleted Hero`))
+    );
+  }
+
+  searchHeroes(term : string): Observable<Hero[]>{
+    if(!term || !term.trim()){
+      return of([]);
+    }
+    return this.httpClient.get<Hero[]>(`${this.heroesUrl}/?name=${term}`).pipe(
+      tap(_ => this.logMsg(`searching heroes for term : ${term}`)),
+      catchError(this.handleError<Hero[]>(`searchHeroes`))
+    );
+  }
+
+  private logMsg(msg: string) : void{
     this.msgService.add(msg);
   }
 

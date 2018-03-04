@@ -18,6 +18,7 @@ import { HeroService } from './services/hero.service';
 import { MessageComponent } from './message/message.component';
 import { MessageService } from './services/message.service';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { HeroSearchComponent } from './hero-search/hero-search.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { DashboardComponent } from './dashboard/dashboard.component';
     HeroesComponent,
     HerodetailComponent,
     MessageComponent,
-    DashboardComponent
+    DashboardComponent,
+    HeroSearchComponent
   ],
   imports: [
     BrowserModule,
